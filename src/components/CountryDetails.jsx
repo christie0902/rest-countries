@@ -6,16 +6,22 @@ import { useParams } from "react-router-dom";
 const CountryDetails = () => {
   const { name } = useParams();
   const [country, setCountry] = useState({});
+  const [fetchError, setFetchError] = useState(false);
 
   const loadCountry = async (name) => {
     try {
       const response = await fetch(
         `https://restcountries.com/v3.1/name/${name}`
       );
+      if (!response.ok) {
+        setFetchError(true);
+        return;
+      }
       const data = await response.json();
       setCountry(data[0]);
     } catch (error) {
       console.error("Error fetching countries:", error);
+      setFetchError(true);
     }
   };
 
@@ -23,9 +29,13 @@ const CountryDetails = () => {
     loadCountry(name);
   }, [name]);
   console.log(country);
+  if (fetchError) {
+    return <div>No data found. Please try again later.</div>;
+  }
 
   return (
-    <div>
+    <div className="country-details-container">
+      {" "}
       {country.name && (
         <>
           <h2>{country.name.common}</h2>
@@ -37,43 +47,77 @@ const CountryDetails = () => {
               : "Unknown"}
           </p>
           <p>
-            <strong>Population:</strong> {country.population}
+            <strong>Population:</strong> {country.population || "Unknown"}
           </p>
           <p>
-            <strong>Region:</strong> {country.region}
+            <strong>Region:</strong> {country.region || "Unknown"}
           </p>
           <p>
-            <strong>Languages:</strong>{" "}
-            {Object.values(country.languages).join(", ")}
+            {country.languages && Object.keys(country.languages).length > 0 ? (
+              <>
+                <strong>Languages:</strong>{" "}
+                {Object.values(country.languages).join(", ")}
+              </>
+            ) : (
+              "Unknown"
+            )}
           </p>
           <p>
-            <strong>Borders:</strong> {country.borders.join(", ")}
+            <strong>Borders:</strong>{" "}
+            {country.borders && Object.keys(country.borders).length > 0 ? (
+              <>
+                {country.borders.map((border) => (
+                  <Link
+                    to={`/country/name/${border}`}
+                    key={border}
+                    className="border-button"
+                  >
+                    {border}
+                  </Link>
+                ))}
+              </>
+            ) : (
+              "Unknown"
+            )}
           </p>
           <p>
-            <strong>Area:</strong> {country.area} sq km
+            <strong>Area:</strong> {country.area || "Unknown"} sq km
           </p>
           <p>
-            <strong>Timezones:</strong> {country.timezones.join(", ")}
+            <strong>Timezones:</strong>{" "}
+            {country.timezones && country.timezones.length > 0
+              ? country.timezones.join(", ")
+              : "Unknown"}
           </p>
           <p>
             <strong>Official Map Links:</strong>{" "}
-            <a
-              href={country.maps.googleMaps}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Google Maps
-            </a>
-            ,{" "}
-            <a
-              href={country.maps.openStreetMaps}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              OpenStreetMap
-            </a>
+            {country.maps &&
+            country.maps.googleMaps &&
+            country.maps.openStreetMaps ? (
+              <>
+                <a
+                  href={country.maps.googleMaps}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Google Maps
+                </a>
+                ,{" "}
+                <a
+                  href={country.maps.openStreetMaps}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  OpenStreetMap
+                </a>
+              </>
+            ) : (
+              "Unknown"
+            )}
           </p>
-          <Link to={`/`}>Back</Link>
+          <Link to={`/`} className="back-link">
+            Back
+          </Link>
         </>
       )}
     </div>
